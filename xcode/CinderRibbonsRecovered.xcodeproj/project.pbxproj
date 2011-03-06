@@ -20,6 +20,7 @@
 		53E3CDFC0E86099300238D2B /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53E3CDFB0E86099300238D2B /* Carbon.framework */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		A95807FA13237EE40040DFF1 /* RibbonParticle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A95807F913237EE40040DFF1 /* RibbonParticle.cpp */; };
+		A958084113240AB60040DFF1 /* Ribbon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A958084013240AB60040DFF1 /* Ribbon.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,8 @@
 		8D1107320486CEB800E47090 /* CinderRibbonsRecovered.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CinderRibbonsRecovered.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A95807F813237EE40040DFF1 /* RibbonParticle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RibbonParticle.h; sourceTree = "<group>"; };
 		A95807F913237EE40040DFF1 /* RibbonParticle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RibbonParticle.cpp; sourceTree = "<group>"; };
+		A958083F13240AB60040DFF1 /* Ribbon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Ribbon.h; sourceTree = "<group>"; };
+		A958084013240AB60040DFF1 /* Ribbon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Ribbon.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +74,7 @@
 			children = (
 				00BAE6590E7ED9C10018A608 /* CinderRibbonsRecoveredApp.cpp */,
 				A95807F913237EE40040DFF1 /* RibbonParticle.cpp */,
+				A958084013240AB60040DFF1 /* Ribbon.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -125,6 +129,7 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				A958083F13240AB60040DFF1 /* Ribbon.h */,
 				A95807F813237EE40040DFF1 /* RibbonParticle.h */,
 				32CA4F630368D1EE00C91783 /* CinderRibbonsRecovered_Prefix.pch */,
 			);
@@ -212,6 +217,7 @@
 			files = (
 				00BAE65A0E7ED9C10018A608 /* CinderRibbonsRecoveredApp.cpp in Sources */,
 				A95807FA13237EE40040DFF1 /* RibbonParticle.cpp in Sources */,
+				A958084113240AB60040DFF1 /* Ribbon.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
