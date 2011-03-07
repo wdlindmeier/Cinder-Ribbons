@@ -17,6 +17,30 @@
 using namespace ci;
 using namespace std;
 
+//bool pnpoly(int nVert, float *vertx, float *verty, float testx, float testy)
+bool pointFallsWithinShape(const Vec2i &testPoint, list<RibbonParticle *> *particles)
+{
+	int nVert = particles->size();
+	float vertx[nVert];
+	float verty[nVert];
+	int n=0;
+	for(list<RibbonParticle *>::iterator p = particles->begin(); p != particles->end(); ++p){
+		vertx[n] = (*p)->mPos.x;
+		verty[n] = (*p)->mPos.y;
+		n++;
+	}
+	
+	int testx = testPoint.x;
+	int testy = testPoint.y;
+	int i, j = 0;
+	bool c = false;
+	for (i = 0, j = nVert-1; i < nVert; j = i++) {
+		if (((verty[i]>testy) != (verty[j]>testy)) &&
+			(testx < (vertx[j]-vertx[i]) * (testy-verty[i]) / (verty[j]-verty[i]) + vertx[i]))
+			c = !c;
+	}
+	return c;
+}
 
 bool getLineIntersection(float p0_x, float p0_y, float p1_x, float p1_y, float p2_x, float p2_y, float p3_x, float p3_y, float *i_x, float *i_y)
 {
@@ -133,6 +157,8 @@ void Ribbon::addParticle(const Vec2i &position)
 		if(intersected){
 			mParticles.clear();
 			mParticles = shapeParticles;
+						
+			app::console() << "100x100 in ribbon? " << (pointFallsWithinShape(Vec2i(100,100), &mParticles) ? "YES" : "NO") << "\n";
 		}
 	}
 	mParticleHead = p;	

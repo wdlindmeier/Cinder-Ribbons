@@ -36,55 +36,6 @@ void RibbonTestApp::setup()
 	mIsTracing = false;
 }
 
-//bool pnpoly(int nVert, float *vertx, float *verty, float testx, float testy)
-bool pointFallsWithinShape(const Vec2i &testPoint, list<RibbonParticle *> *particles)
-{
-	int nVert = particles->size();
-	float vertx[nVert];
-	float verty[nVert];
-	int n=0;
-	for(list<RibbonParticle *>::iterator p = particles->begin(); p != particles->end(); ++p){
-		vertx[n] = (*p)->mPos.x;
-		verty[n] = (*p)->mPos.y;
-		n++;
-	}
-
-	int testx = testPoint.x;
-	int testy = testPoint.y;
-	int i, j = 0;
-	bool c = false;
-	for (i = 0, j = nVert-1; i < nVert; j = i++) {
-		if (((verty[i]>testy) != (verty[j]>testy)) &&
-			(testx < (vertx[j]-vertx[i]) * (testy-verty[i]) / (verty[j]-verty[i]) + vertx[i]))
-			c = !c;
-	}
-	return c;
-}
-/*
-bool get_line_intersection(float p0_x, float p0_y, float p1_x, float p1_y, 
-						   float p2_x, float p2_y, float p3_x, float p3_y, float *i_x, float *i_y)
-{
-    float s1_x, s1_y, s2_x, s2_y;
-    s1_x = p1_x - p0_x;     s1_y = p1_y - p0_y;
-    s2_x = p3_x - p2_x;     s2_y = p3_y - p2_y;
-	
-    float s, t;
-    s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y);
-    t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
-	
-    if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
-    {
-        // Collision detected
-        if (i_x != NULL)
-            *i_x = p0_x + (t * s1_x);
-        if (i_y != NULL)
-            *i_y = p0_y + (t * s1_y);
-        return true;
-    }
-	
-    return false; // No collision
-}
-*/
 void RibbonTestApp::mouseUp( MouseEvent event )
 {
 
