@@ -17,7 +17,7 @@ public:
 	void update();
 	
 	ci::Vec2f		mPos, mVel, mVelNormal;
-	int				age;
+	int				mAge;
 	RibbonParticle	*mNextParticle, *mPrevParticle;
 	
 };

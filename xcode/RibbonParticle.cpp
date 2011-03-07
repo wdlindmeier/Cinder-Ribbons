@@ -18,6 +18,7 @@ RibbonParticle::RibbonParticle()
 	mVelNormal = Vec2f::zero();
 	mNextParticle = NULL;
 	mPrevParticle = NULL;
+	mAge = 0;
 }
 
 RibbonParticle::~RibbonParticle()
@@ -32,6 +33,8 @@ RibbonParticle::~RibbonParticle()
 
 void RibbonParticle::update()
 {
+	mAge++;
+	
 	if(mPrevParticle != NULL && mNextParticle != NULL){
 		// Average my mVelNormal
 		float velNormalDistance = mVelNormal.length();
@@ -41,7 +44,8 @@ void RibbonParticle::update()
 		float avgDelta = (avgNormalDistance - velNormalDistance) * 0.2;
 		float normalMagnatude = (velNormalDistance + avgDelta) / velNormalDistance;
 		if(!std::isnan(normalMagnatude) && !std::isinf(normalMagnatude)){
-			mVelNormal = Vec2f(mVelNormal.x * normalMagnatude * 0.99, mVelNormal.y * normalMagnatude  * 0.99);
+			//mVelNormal = Vec2f(mVelNormal.x * normalMagnatude * 0.99, mVelNormal.y * normalMagnatude  * 0.99);
+			mVelNormal = Vec2f(mVelNormal.x * normalMagnatude, mVelNormal.y * normalMagnatude);
 		}
 	}
 }

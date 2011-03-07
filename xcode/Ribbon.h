@@ -22,5 +22,6 @@ public:
 	void addFinalParticle(const ci::Vec2i &position);
 
 	std::list<RibbonParticle *>	mParticles;
-	RibbonParticle			*mParticleHead;
+	RibbonParticle *mParticleHead;
+	
 };
