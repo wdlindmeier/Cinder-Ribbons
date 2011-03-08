@@ -23,5 +23,9 @@ public:
 
 	std::list<RibbonParticle *>	mParticles;
 	RibbonParticle *mParticleHead;
+    int mAge;
+    int mAgeConnectedAt;
+    int mMaxParticles;
+    std::list<RibbonParticle *>	mIntersectionParticles;
 	
 };

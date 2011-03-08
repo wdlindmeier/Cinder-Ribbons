@@ -17,31 +17,6 @@
 using namespace ci;
 using namespace std;
 
-//bool pnpoly(int nVert, float *vertx, float *verty, float testx, float testy)
-bool pointFallsWithinShape(const Vec2i &testPoint, list<RibbonParticle *> *particles)
-{
-	int nVert = particles->size();
-	float vertx[nVert];
-	float verty[nVert];
-	int n=0;
-	for(list<RibbonParticle *>::iterator p = particles->begin(); p != particles->end(); ++p){
-		vertx[n] = (*p)->mPos.x;
-		verty[n] = (*p)->mPos.y;
-		n++;
-	}
-	
-	int testx = testPoint.x;
-	int testy = testPoint.y;
-	int i, j = 0;
-	bool c = false;
-	for (i = 0, j = nVert-1; i < nVert; j = i++) {
-		if (((verty[i]>testy) != (verty[j]>testy)) &&
-			(testx < (vertx[j]-vertx[i]) * (testy-verty[i]) / (verty[j]-verty[i]) + vertx[i]))
-			c = !c;
-	}
-	return c;
-}
-
 bool getLineIntersection(float p0_x, float p0_y, float p1_x, float p1_y, float p2_x, float p2_y, float p3_x, float p3_y, float *i_x, float *i_y)
 {
     float s1_x, s1_y, s2_x, s2_y;
@@ -53,8 +28,8 @@ bool getLineIntersection(float p0_x, float p0_y, float p1_x, float p1_y, float p
     t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
 
 	// NOTE: We dont want "or equal to"
-//	if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
-    if (s > 0 && s < 1 && t > 0 && t < 1)
+	if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
+//    if (s > 0 && s < 1 && t > 0 && t < 1)
     {
         // Collision detected
         if (i_x != NULL)
@@ -71,6 +46,10 @@ bool getLineIntersection(float p0_x, float p0_y, float p1_x, float p1_y, float p
 Ribbon::Ribbon()
 {
 	mParticleHead = NULL;
+    mAge = 0;
+    mAgeConnectedAt = 0;
+    mMaxParticles = 200;
+
 }
 
 Ribbon::~Ribbon()
@@ -84,6 +63,21 @@ Ribbon::~Ribbon()
 
 void Ribbon::update()
 {	
+    // Clear the intersection particles every time we update. 
+    // We only need them around for 1 loop so the app can test for them.
+    if(mIntersectionParticles.size() > 0){
+//        app::console() << "clearing ix\n";
+        // Delete every particle but the head
+        for(list<RibbonParticle *>::iterator op = mIntersectionParticles.begin(); op != mIntersectionParticles.end(); ++op){
+            if((*op) != mParticleHead){                        
+                // These particles aren't used anymore so we should delete them
+                delete *op;
+            }
+        }
+        mIntersectionParticles.clear();
+    }
+        
+    mAge++;
 	for(list<RibbonParticle *>::iterator p = mParticles.begin(); p != mParticles.end();++p){
 		(*p)->update();
 	}	
@@ -127,7 +121,7 @@ void Ribbon::addParticle(const Vec2i &position)
 		
 		// Check if the particle intersects.
 		// NOTE: This isn't the most sophisticated way of doing it since in many cases we'll dupe the array w/out ever using it
-		std::list<RibbonParticle *>	shapeParticles;
+		//std::list<RibbonParticle *>	shapeParticles;
 		
 		bool intersected = false;
 		
@@ -135,7 +129,7 @@ void Ribbon::addParticle(const Vec2i &position)
 			
 			if(!intersected){
 				
-				shapeParticles.push_front(*op);
+				mIntersectionParticles.push_front(*op);
 				
 				// If the other particle is not me, and the other particle has a previous particle
 				if((*op) != p && (*op)->mPrevParticle && p->mPrevParticle && p->mPrevParticle != (*op)){
@@ -155,13 +149,40 @@ void Ribbon::addParticle(const Vec2i &position)
 		}		
 		
 		if(intersected){
+            app::console() << "ix " << mIntersectionParticles.size() << "\n";
+            //			app::console() << "100x100 in ribbon? " << (pointFallsWithinShape(Vec2i(100,100), &shapeParticles) ? "YES" : "NO") << "\n";            
+            // Delete every particle but the head
+            /*
+            for(list<RibbonParticle *>::reverse_iterator op = mParticles.rbegin(); op != mParticles.rend(); ++op){
+                if((*op) != p){
+                    delete *op;
+                }
+            }
+            */
+            
+            // Replace mParticles with a new list only containing the head
 			mParticles.clear();
-			mParticles = shapeParticles;
-						
-			app::console() << "100x100 in ribbon? " << (pointFallsWithinShape(Vec2i(100,100), &mParticles) ? "YES" : "NO") << "\n";
-		}
+            list<RibbonParticle *> newParticles;
+            newParticles.push_back(p);
+			mParticles = newParticles;
+            mAgeConnectedAt = mAge;
+		}else{
+//            app::console() << "clearing ix in add particle\n";
+            // Clear the intersection particles so the app doesn't think we have a shape to test
+            mIntersectionParticles.clear();
+        }
 	}
 	mParticleHead = p;	
+    
+    int numExtraParticles = mParticles.size() - mMaxParticles;
+    if(numExtraParticles > 0){
+        for(int i=0;i<numExtraParticles;i++){
+            // Remove extra particles
+            RibbonParticle *p = mParticles.front();
+            delete p;
+            mParticles.pop_front();
+        }
+    }
 			
 }
 
@@ -215,9 +236,21 @@ void Ribbon::draw()
 		float value = ((*p)->mAge / 200.0);
 
 		// Draw the filled ribbon
-		gl::color(Color(1.0-value,1.0-value,0));
+        // Defaults to yellow
+        float red = 1.0;
+        float green = 1.0;
+        float blue = 0.0;
+        if(mAgeConnectedAt > 0){
+            int lastConnected = mAge - mAgeConnectedAt;
+            if(lastConnected < 20){
+                // TODO: Make the ribbon Green if it's captured something and Red if it hasn't
+                green = lastConnected * 0.05;                
+            }
+        }
+		gl::color(Color(red,green,blue));
 		gl::drawSolid(path);
 		
+        /*
 		// Draw the surface normal
 		gl::color(Color(1.0-value,0,0));
 		gl::drawLine(normPos1, normPos2);
@@ -225,6 +258,7 @@ void Ribbon::draw()
 		// Draw a line indicating it's position w/ velocity
 		gl::color(Color::black());
 		gl::drawLine(Vec2i(x1,y1), Vec2i(x2, y2));		
+        */
 		
 	}
 }

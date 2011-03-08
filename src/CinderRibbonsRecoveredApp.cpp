@@ -1,18 +1,41 @@
 #include "cinder/app/AppBasic.h"
 #include "cinder/gl/gl.h"
 #include "cinder/Vector.h"
-//#import "RibbonParticle.h"
+#import "RibbonParticle.h"
 #import "Ribbon.h"
 #include <list>
 //#include <vector>
 #include <math.h>
 #include "cinder/Rand.h"
-
-#define MAX_RIBBONS	20
+#import "Goal.h"
 
 using namespace ci;
 using namespace ci::app;
 using namespace std;
+
+bool pointFallsWithinShape(const Vec2i &testPoint, list<RibbonParticle *> *particles)
+{
+	int nVert = particles->size();
+	float vertx[nVert];
+	float verty[nVert];
+	int n=0;
+	for(list<RibbonParticle *>::iterator p = particles->begin(); p != particles->end(); ++p){
+		vertx[n] = (*p)->mPos.x;
+		verty[n] = (*p)->mPos.y;
+		n++;
+	}
+	
+	int testx = testPoint.x;
+	int testy = testPoint.y;
+	int i, j = 0;
+	bool c = false;
+	for (i = 0, j = nVert-1; i < nVert; j = i++) {
+		if (((verty[i]>testy) != (verty[j]>testy)) &&
+			(testx < (vertx[j]-vertx[i]) * (testy-verty[i]) / (verty[j]-verty[i]) + vertx[i]))
+			c = !c;
+	}
+	return c;
+}
 
 class RibbonTestApp : public AppBasic {
 	
@@ -24,16 +47,19 @@ public:
 	void addNewRibbon();
 	
 	Vec2i					mMousePos;
-	list<Ribbon *>			mRibbons;	
-	list<Ribbon *>			mCurrentRibbons;	
+    Ribbon                  *mCurrentRibbon;
+    list<Goal *>            mGoals;
+    int                     mMaxGoalAge;
 	bool					mIsTracing;
 	
 };
 
 void RibbonTestApp::setup()
 {
+    mMaxGoalAge = 100;
 	mMousePos = Vec2i::zero();
 	mIsTracing = false;
+    mCurrentRibbon = NULL;
 }
 
 void RibbonTestApp::mouseUp( MouseEvent event )
@@ -43,65 +69,85 @@ void RibbonTestApp::mouseUp( MouseEvent event )
 	
 	// If we stopped drawing and there are any ribbons, close them out
 	if(!mIsTracing){
-		for(list<Ribbon *>::iterator r=mCurrentRibbons.begin(); r!=mCurrentRibbons.end();){
-			(*r)->addFinalParticle(getMousePos());
-			++r;
-		}
-		mCurrentRibbons.clear();
+
+        if(mCurrentRibbon){
+            mCurrentRibbon->addFinalParticle(getMousePos());
+        }
 	}else{
 		
 		this->addNewRibbon();
-		// Add a new ribbon to the current collection
-		/*
-		Ribbon *r = new Ribbon();
-		mRibbons.push_back(r);
-		mCurrentRibbons.push_back(r);		
-		*/
+
 	}
 	
 }
 
 void RibbonTestApp::addNewRibbon()
 {
-	Ribbon *r = new Ribbon();
-	mRibbons.push_back(r);
-	mCurrentRibbons.push_back(r);			
+    if(mCurrentRibbon){
+        delete mCurrentRibbon;
+    }
+    mCurrentRibbon = new Ribbon();
 }
 
 void RibbonTestApp::update()
 {
+    if(Rand::randInt(1000) < 5){
+        // Randomly add goals
+        Goal *g = new Goal(Vec2i(Rand::randInt(640), Rand::randInt(480)));
+        mGoals.push_back(g);
+    }
 
-	if(mIsTracing){
-		// Add to the current ribbons
-		for(list<Ribbon *>::iterator r=mCurrentRibbons.begin(); r!=mCurrentRibbons.end();++r){
-			(*r)->addParticle(getMousePos());
-		}		
+    // IMPORTANT: Only add particles if the mouse has moved
+	if(mIsTracing && mMousePos != getMousePos()){
+        mMousePos = getMousePos();
+        mCurrentRibbon->addParticle(mMousePos);
 	}
+    
+    // NOTE: This must happen after addParticle and before ribbon.update()
+    if(mCurrentRibbon && mCurrentRibbon->mIntersectionParticles.size() > 0){
+        // There's an intersection. Do a point check on all of the goals
+        for(list<Goal *>::iterator g = mGoals.begin(); g != mGoals.end(); ++g){
+            bool hitTest = pointFallsWithinShape((*g)->mPos, &(mCurrentRibbon->mIntersectionParticles));
+            if(hitTest){
+                (*g)->mIsCaptured = true;
+                console() << "HIT AT x:" << (*g)->mPos.x << " y:" << (*g)->mPos.y << "\n";
+            }            
+        }        
+    }
 	
-	for(list<Ribbon *>::iterator r = mRibbons.begin(); r != mRibbons.end();++r){
-		(*r)->update();
-//		console() << "100x100 in ribbon? " << (pointFallsWithinShape(Vec2i(100,100), &((*r)->mParticles)) ? "YES" : "NO") << "\n";
-	}
-	
-	int ribbonsSize = mRibbons.size();
-	if(ribbonsSize > MAX_RIBBONS){
-		int delta = ribbonsSize - MAX_RIBBONS;
-		for(int i=0;i<delta;i++){
-			Ribbon *r = mRibbons.front();
-			mRibbons.pop_front();
-			delete r;
-		}
-	}
-	
+    if(mCurrentRibbon){
+        mCurrentRibbon->update(); 
+    }
+
+	for(list<Goal *>::iterator g = mGoals.begin(); g != mGoals.end(); ++g){
+
+		(*g)->update();
+        
+        // If it's too old or is captured, remove it
+        if( (*g)->mAge > mMaxGoalAge || (*g)->mIsCaptured ){
+            delete (*g);
+            mGoals.remove((*g));
+        }else{
+//            ++g;
+        }
+	}    
 }
+
 
 void RibbonTestApp::draw()
 {
 	gl::clear( Color( 0, 0, 0 ) ); 
 	
-	for(list<Ribbon *>::iterator r = mRibbons.begin(); r != mRibbons.end(); ++r){
-		(*r)->draw();
+    if(mCurrentRibbon){
+        mCurrentRibbon->draw();
+    }
+
+    for(list<Goal *>::iterator g = mGoals.begin(); g != mGoals.end(); ++g){
+		(*g)->draw();
 	}	
+    
+    gl::color(Color::white());
+    gl::drawSolidCircle(Vec2i(100,100), 10);
 }
 
 CINDER_APP_BASIC( RibbonTestApp, RendererGl );
